@@ -198,7 +198,7 @@ const rules = {
  * Подробнее: это набор часто используемых правил, которые можно использовать
  * как отправную точку, но вы всегда можете настроить свой собственный набор
  */
-const defaultRules = [
+ const defaultRules = [
     'skipNonExistentSourceFields',
     'skipEmptyTargetValues',
     'failOnEmptySource',
