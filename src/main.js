@@ -26,10 +26,14 @@ function collectState() {
     const rowsPerPage = parseInt(state.rowsPerPage);    // приведём количество страниц к числу
     const page = parseInt(state.page ?? 1);                // номер страницы по умолчанию 1 и тоже число
 
+    const fromValue = state.totalFrom ? parseFloat(state.totalFrom) : '';
+    const toValue = state.totalTo ? parseFloat(state.totalTo) : '';
+
     return {                                            // расширьте существующий return вот так
         ...state,
         rowsPerPage,
         page
+        //total: [fromValue, toValue]
     };
 }
 
@@ -56,8 +60,18 @@ const sampleTable = initTable({
     before: ['search', 'header', 'filter'],
     after: ['pagination']
 }, render);
-
 // @todo: инициализация
+const applySearching = initSearching('search');
+
+const applyFiltering = initFiltering(sampleTable.filter.elements, {    // передаём элементы фильтра
+    searchBySeller: indexes.sellers                                    // для элемента с именем searchBySeller устанавливаем массив продавцов
+});
+
+const applySorting = initSorting([        // Нам нужно передать сюда массив элементов, которые вызывают сортировку, чтобы изменять их визуальное представление
+    sampleTable.header.elements.sortByDate,
+    sampleTable.header.elements.sortByTotal
+]);
+
 const applyPagination = initPagination(
     sampleTable.pagination.elements,             // передаём сюда элементы пагинации, найденные в шаблоне
     (el, page, isCurrent) => {                    // и колбэк, чтобы заполнять кнопки страниц данными
@@ -70,17 +84,7 @@ const applyPagination = initPagination(
     }
 );
 
-const applySorting = initSorting([        // Нам нужно передать сюда массив элементов, которые вызывают сортировку, чтобы изменять их визуальное представление
-    sampleTable.header.elements.sortByDate,
-    sampleTable.header.elements.sortByTotal
-]);
 const appRoot = document.querySelector('#app');
 appRoot.appendChild(sampleTable.container);
-
-const applyFiltering = initFiltering(sampleTable.filter.elements, {    // передаём элементы фильтра
-    searchBySeller: indexes.sellers                                    // для элемента с именем searchBySeller устанавливаем массив продавцов
-});
-
-const applySearching = initSearching('search');
 
 render();
