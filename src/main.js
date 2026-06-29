@@ -26,14 +26,10 @@ function collectState() {
     const rowsPerPage = parseInt(state.rowsPerPage);    // приведём количество страниц к числу
     const page = parseInt(state.page ?? 1);                // номер страницы по умолчанию 1 и тоже число
 
-    const fromValue = state.totalFrom ? parseFloat(state.totalFrom) : '';
-    const toValue = state.totalTo ? parseFloat(state.totalTo) : '';
-
     return {                                            // расширьте существующий return вот так
         ...state,
         rowsPerPage,
         page
-        //total: [fromValue, toValue]
     };
 }
 
@@ -41,7 +37,13 @@ function collectState() {
  * Перерисовка состояния таблицы при любых изменениях
  * @param {HTMLButtonElement?} action
  */
+let applySearching, applyFiltering, applySorting, applyPagination;
+
 function render(action) {
+    if (!applySearching || !applyFiltering || !applySorting || !applyPagination) {
+        return;
+    }
+
     let state = collectState(); // состояние полей из таблицы
 
     let result = [...data]; // копируем для последующего изменения
@@ -61,18 +63,18 @@ const sampleTable = initTable({
     after: ['pagination']
 }, render);
 // @todo: инициализация
-const applySearching = initSearching('search');
+applySearching = initSearching('search');
 
-const applyFiltering = initFiltering(sampleTable.filter.elements, {    // передаём элементы фильтра
-    searchBySeller: indexes.sellers                                    // для элемента с именем searchBySeller устанавливаем массив продавцов
+applyFiltering = initFiltering(sampleTable.filter.elements, {    // передаём элементы фильтра
+    searchBySeller: indexes.sellers                              // для элемента с именем searchBySeller устанавливаем массив продавцов
 });
 
-const applySorting = initSorting([        // Нам нужно передать сюда массив элементов, которые вызывают сортировку, чтобы изменять их визуальное представление
+applySorting = initSorting([        // Нам нужно передать сюда массив элементов, которые вызывают сортировку, чтобы изменять их визуальное представление
     sampleTable.header.elements.sortByDate,
     sampleTable.header.elements.sortByTotal
 ]);
 
-const applyPagination = initPagination(
+applyPagination = initPagination(
     sampleTable.pagination.elements,             // передаём сюда элементы пагинации, найденные в шаблоне
     (el, page, isCurrent) => {                    // и колбэк, чтобы заполнять кнопки страниц данными
         const input = el.querySelector('input');
@@ -86,5 +88,31 @@ const applyPagination = initPagination(
 
 const appRoot = document.querySelector('#app');
 appRoot.appendChild(sampleTable.container);
+// Находим форму с фильтрами внутри нашей таблицы
+const filterForm = sampleTable.container.querySelector('form');
+
+// Если форма нашлась, мы приказываем ей слушать действия пользователя
+if (filterForm) {
+
+    // А) Когда пользователь пишет цифры в инпуты "от" и "до"
+    filterForm.addEventListener('input', () => {
+        render(); // Перерисовываем таблицу на каждый ввод символа
+    });
+
+    // Б) Когда пользователь выбирает продавца в выпадающем списке
+    filterForm.addEventListener('change', () => {
+        render(); // Перерисовываем таблицу при смене продавца
+    });
+
+    // В) Когда пользователь нажимает на кнопку очистки (крестик)
+    filterForm.addEventListener('click', (event) => {
+        // Проверяем, что кликнули именно по кнопке очистки
+        const clearButton = event.target.closest('[data-name="clear"], button');
+        if (clearButton) {
+            // Передаем эту кнопку в render, чтобы сработал код сброса поля
+            render(clearButton); 
+        }
+    });
+}
 
 render();
