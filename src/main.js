@@ -1,6 +1,3 @@
-//import './fonts/ys-display/fonts.css'
-//import './style.css'
-
 import {data as sourceData} from "./data/dataset_1.js";
 
 import {initData} from "./data.js";
@@ -92,17 +89,17 @@ appRoot.appendChild(sampleTable.container);
 //Слушаем события на всем контейнере таблицы
 if (sampleTable.container) {
 
-    // А) Перерисовываем на каждый ввод символа в ЛЮБОЙ инпут (поиск, фильтры даты, покупателя, суммы)
+    //Перерисовываем на каждый ввод символа в ЛЮБОЙ инпут (поиск, фильтры даты, покупателя, суммы)
     sampleTable.container.addEventListener('input', () => {
         render(); 
     });
 
-    // Б) Перерисовываем при изменении выпадающих списков (выбор продавца, выбор количества строк на странице)
+    //Перерисовываем при изменении выпадающих списков (выбор продавца, выбор количества строк на странице)
     sampleTable.container.addEventListener('change', () => {
         render(); 
     });
 
-    // В) Обработка клика по кнопке очистки (крестику)
+    //Обработка клика по кнопке очистки (крестику)
     sampleTable.container.addEventListener('click', (event) => {
         // Ищем ближайшую кнопку с дата-атрибутом clear
         const clearButton = event.target.closest('[data-name="clear"], button[data-action="clear"]');
