@@ -1,7 +1,12 @@
-import {createComparison, defaultRules, rules} from "../lib/compare.js";
+import {createComparison, defaultRules} from "../lib/compare.js";
 
 // @todo: #4.3 — настроить компаратор
-const compare = createComparison(defaultRules, [rules.arrayAsRange()]);
+const compare = createComparison([
+    'skipNonExistentSourceFields',
+    'skipEmptyTargetValues',
+    'arrayAsRange',
+    'caseInsensitiveStringIncludes'
+]);
 
 export function initFiltering(elements, indexes) {
     // @todo: #4.1 — заполнить выпадающие списки опциями
@@ -25,9 +30,14 @@ export function initFiltering(elements, indexes) {
     function filterData(data, state) {
         const criteria = {};
 
-        // Фильтр по продавцу
-        if (state.searchBySeller && state.searchBySeller !== 'Все') {
-            criteria.seller = state.searchBySeller;
+        // Фильтр по дате
+        if (state.searchByDate && state.searchByDate.trim() !== '') {
+            criteria.date = state.searchByDate.trim();
+        }
+
+        // Фильтр по покупателю
+        if (state.searchByCustomer && state.searchByCustomer.trim() !== '') {
+            criteria.customer = state.searchByCustomer.trim();
         }
 
         // Фильтр по сумме (диапазон)
@@ -41,7 +51,15 @@ export function initFiltering(elements, indexes) {
             ];
         }
 
-        return data.filter(row => compare(row, criteria));
+        return data.filter(row => {
+            // Строгое соответствие для продавца (так как выбирается из списка "Все" или конкретный)
+            if (state.searchBySeller && state.searchBySeller !== 'Все'&& state.searchBySeller.trim() !== '') {
+                if (row.seller !== state.searchBySeller) {
+                    return false;
+                }
+            }
+            return compare(row, criteria);
+        });
     }
 
     // Функция обновления таблицы
@@ -58,7 +76,9 @@ export function initFiltering(elements, indexes) {
         }
 
         const formData = new FormData(form);
-        currentState.searchBySeller = formData.get('searchBySeller') || '';
+        currentState.searchBySeller = formData.get('seller') || '';
+        currentState.searchByDate = formData.get('date') || '';
+        currentState.searchByCustomer = formData.get('customer') || '';
         currentState.totalFrom = formData.get('totalFrom') || '';
         currentState.totalTo = formData.get('totalTo') || '';
 
