@@ -22,25 +22,26 @@ export function initFiltering(elements, indexes) {
             );
         }    
     });
-    // Обработчики формы
-    const form = document.querySelector('form');
-    let currentData = [];
-    let currentState = {};
 
     function filterData(data, state) {
         const criteria = {};
 
-        // Фильтр по дате
-        if (state.searchByDate && state.searchByDate.trim() !== '') {
-            criteria.date = state.searchByDate.trim();
+        // 1. Фильтр по продавцу (из name="seller")
+        if (state.seller && state.seller !== 'Все' && state.seller !== '—') {
+            criteria.seller = state.seller;
         }
 
-        // Фильтр по покупателю
-        if (state.searchByCustomer && state.searchByCustomer.trim() !== '') {
-            criteria.customer = state.searchByCustomer.trim();
+        // 2. Фильтр по дате (из name="date")
+        if (state.date && state.date.trim() !== '') {
+            criteria.date = state.date.trim();
         }
 
-        // Фильтр по сумме (диапазон)
+        // 3. Фильтр по покупателю (из name="customer")
+        if (state.customer && state.customer.trim() !== '') {
+            criteria.customer = state.customer.trim();
+        }
+
+        // 4. Фильтр по сумме (диапазон)
         const totalFrom = state.totalFrom?.trim();
         const totalTo = state.totalTo?.trim();
 
@@ -51,52 +52,10 @@ export function initFiltering(elements, indexes) {
             ];
         }
 
-        return data.filter(row => {
-            // Строгое соответствие для продавца (так как выбирается из списка "Все" или конкретный)
-            if (state.searchBySeller && state.searchBySeller !== 'Все'&& state.searchBySeller.trim() !== '') {
-                if (row.seller !== state.searchBySeller) {
-                    return false;
-                }
-            }
-            return compare(row, criteria);
-        });
+        return data.filter(row => compare(row, criteria));
     }
-
-    // Функция обновления таблицы
-    function updateTable(data, state) {
-        const filtered = filterData(data, state);
-        console.log('Отфильтровано строк:', filtered.length);
-        return filtered;
-    }
-
-    // Обработчик событий формы
-    function handleFilterChange(e) {
-        if (['submit', 'reset'].includes(e.type)) {
-            e.preventDefault();
-        }
-
-        const formData = new FormData(form);
-        currentState.searchBySeller = formData.get('seller') || '';
-        currentState.searchByDate = formData.get('date') || '';
-        currentState.searchByCustomer = formData.get('customer') || '';
-        currentState.totalFrom = formData.get('totalFrom') || '';
-        currentState.totalTo = formData.get('totalTo') || '';
-
-        updateTable(currentData, currentState);
-    }
-
-    // Навешиваем обработчики
-    if (form) {
-        form.addEventListener('change', handleFilterChange);
-        form.addEventListener('submit', handleFilterChange);
-        form.addEventListener('reset', handleFilterChange);
-    }
-
     // Возвращаем функцию
     return (data, state, action) => {
-        currentData = data;
-        currentState = state;
-
         if (action && action.name === 'clear') {
             const parent = action.parentElement;
             const field = parent ? parent.querySelector('input, select') : null;
@@ -104,10 +63,9 @@ export function initFiltering(elements, indexes) {
                 field.value = '';
             }
             const fieldName = action.dataset?.field;
-            if (fieldName) {
+            if (fieldName && state) {
                 state[fieldName] = '';
             }
-            return updateTable(data, state);
         }
 
         return filterData(data, state);

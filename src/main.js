@@ -88,31 +88,30 @@ applyPagination = initPagination(
 
 const appRoot = document.querySelector('#app');
 appRoot.appendChild(sampleTable.container);
-// Находим форму с фильтрами внутри нашей таблицы
-const filterForm = sampleTable.container.querySelector('form');
 
-// Если форма нашлась, мы приказываем ей слушать действия пользователя
-if (filterForm) {
+//Слушаем события на всем контейнере таблицы
+if (sampleTable.container) {
 
-    // А) Когда пользователь пишет цифры в инпуты "от" и "до"
-    filterForm.addEventListener('input', () => {
-        render(); // Перерисовываем таблицу на каждый ввод символа
+    // А) Перерисовываем на каждый ввод символа в ЛЮБОЙ инпут (поиск, фильтры даты, покупателя, суммы)
+    sampleTable.container.addEventListener('input', () => {
+        render(); 
     });
 
-    // Б) Когда пользователь выбирает продавца в выпадающем списке
-    filterForm.addEventListener('change', () => {
-        render(); // Перерисовываем таблицу при смене продавца
+    // Б) Перерисовываем при изменении выпадающих списков (выбор продавца, выбор количества строк на странице)
+    sampleTable.container.addEventListener('change', () => {
+        render(); 
     });
 
-    // В) Когда пользователь нажимает на кнопку очистки (крестик)
-    filterForm.addEventListener('click', (event) => {
-        // Проверяем, что кликнули именно по кнопке очистки
-        const clearButton = event.target.closest('[data-name="clear"], button');
+    // В) Обработка клика по кнопке очистки (крестику)
+    sampleTable.container.addEventListener('click', (event) => {
+        // Ищем ближайшую кнопку с дата-атрибутом clear
+        const clearButton = event.target.closest('[data-name="clear"], button[data-action="clear"]');
         if (clearButton) {
-            // Передаем эту кнопку в render, чтобы сработал код сброса поля
+            // Передаем кнопку в render, чтобы сработал код сброса поля в модулях
             render(clearButton); 
         }
     });
 }
 
+// Первый запуск для отрисовки таблицы с исходными данными
 render();
