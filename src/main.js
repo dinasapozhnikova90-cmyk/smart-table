@@ -37,18 +37,10 @@ function collectState() {
 //let applySearching, applyFiltering, applySorting, applyPagination;
 
 async function render(action) {
-    //if (!applySearching || !applyFiltering || !applySorting || !applyPagination) {
-    //    return;
-    //}
-
     let state = collectState(); // состояние полей из таблицы
 
     let query = {}; // здесь будут формироваться параметры запроса //let result = [...data]; копируем для последующего изменения
     // @todo: использование
-    //result = applySearching(result, state, action);
-    //result = applyFiltering(result, state, action);
-    //result = applySorting(result, state, action);
-    //result = applyPagination(result, state, action);
     query = applySearching(query, state, action);
     query = applyFiltering(query, state, action);
     query = applySorting(query, state, action);
@@ -70,9 +62,6 @@ const sampleTable = initTable({
 // @todo: инициализация
 const applySearching = initSearching('search');
 
-//applyFiltering, = initFiltering(sampleTable.filter.elements, {    // передаём элементы фильтра
-//    searchBySeller: indexes.sellers                              // для элемента с именем searchBySeller устанавливаем массив продавцов
-//});
 const {applyFiltering, updateIndexes} = initFiltering(
     sampleTable.filter.elements,    // передаём элементы фильтра
     (el, page, isCurrent) => {                    // и колбэк, чтобы заполнять кнопки страниц данными
@@ -105,30 +94,6 @@ const {applyPagination, updatePagination} = initPagination(
 
 const appRoot = document.querySelector('#app');
 appRoot.appendChild(sampleTable.container);
-
-//Слушаем события на всем контейнере таблицы
-if (sampleTable.container) {
-
-    //Перерисовываем на каждый ввод символа в ЛЮБОЙ инпут (поиск, фильтры даты, покупателя, суммы)
-    sampleTable.container.addEventListener('input', () => {
-        render(); 
-    });
-
-    //Перерисовываем при изменении выпадающих списков (выбор продавца, выбор количества строк на странице)
-    sampleTable.container.addEventListener('change', () => {
-        render(); 
-    });
-
-    //Обработка клика по кнопке очистки (крестику)
-    sampleTable.container.addEventListener('click', (event) => {
-        // Ищем ближайшую кнопку с дата-атрибутом clear
-        const clearButton = event.target.closest('[data-name="clear"], button[data-action="clear"]');
-        if (clearButton) {
-            // Передаем кнопку в render, чтобы сработал код сброса поля в модулях
-            render(clearButton); 
-        }
-    });
-}
 
 async function init() {
     const indexes = await api.getIndexes();
