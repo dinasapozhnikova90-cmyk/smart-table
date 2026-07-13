@@ -1,73 +1,55 @@
-import {createComparison, defaultRules} from "../lib/compare.js";
-
-// @todo: #4.3 — настроить компаратор
-const compare = createComparison([
-    'skipNonExistentSourceFields',
-    'skipEmptyTargetValues',
-    'arrayAsRange',
-    'caseInsensitiveStringIncludes'
-]);
-
-export function initFiltering(elements, indexes) {
-    // @todo: #4.1 — заполнить выпадающие списки опциями
-    Object.keys(indexes).forEach((elementName) => {       // Получаем ключи из объекта// Перебираем по именам
-        if (elements[elementName]) {
-            elements[elementName].append(                    // в каждый элемент добавляем опции
-                ...Object.values(indexes[elementName]).map(name => {         // формируем массив имён, значений опций// используйте name как значение и текстовое содержимое
-                    const option = document.createElement('option');    // @todo: создать и вернуть тег опции
-                    option.value = name;
-                    option.textContent = name;
-                    return option
-                })
-            );
-        }    
-    });
-
-    function filterData(data, state) {
-        const criteria = {};
-
-        // 1. Фильтр по продавцу (из name="seller")
-        if (state.seller && state.seller !== 'Все' && state.seller !== '—') {
-            criteria.seller = state.seller;
-        }
-
-        // 2. Фильтр по дате (из name="date")
-        if (state.date && state.date.trim() !== '') {
-            criteria.date = state.date.trim();
-        }
-
-        // 3. Фильтр по покупателю (из name="customer")
-        if (state.customer && state.customer.trim() !== '') {
-            criteria.customer = state.customer.trim();
-        }
-
-        // 4. Фильтр по сумме (диапазон)
-        const totalFrom = state.totalFrom?.trim();
-        const totalTo = state.totalTo?.trim();
-
-        if (totalFrom || totalTo) {
-            criteria.total = [
-                totalFrom ? parseFloat(totalFrom) : null,
-                totalTo ? parseFloat(totalTo) : null
-            ];
-        }
-
-        return data.filter(row => compare(row, criteria));
+export function initFiltering(elements) {
+    const updateIndexes = (elements, indexes) => {
+        Object.keys(indexes).forEach((elementName) => {
+            elements[elementName].append(...Object.values(indexes[elementName]).map(name => {
+                const el = document.createElement('option');
+                el.textContent = name;
+                el.value = name;
+                return el;
+            }))
+        })
     }
-    // Возвращаем функцию
-    return (data, state, action) => {
+
+    const applyFiltering = (query, state, action) => {
+        // код с обработкой очистки поля
         if (action && action.name === 'clear') {
             const parent = action.parentElement;
             const field = parent ? parent.querySelector('input, select') : null;
             if (field) {
-                field.value = '';
+                field.value = ''; // Сбрасываем значение в самом HTML-элементе
             }
             const fieldName = action.dataset?.field;
             if (fieldName && state) {
-                state[fieldName] = '';
+                state[fieldName] = '';  // Сбрасываем значение в объекте состояния
             }
-        }
+        } 
 
-        return filterData(data, state);
-    };
+        // @todo: #4.5 — отфильтровать данные, используя компаратор
+        const filter = {};
+        //находим элементы полей значений "от" и "до"
+        const fromInput = Object.values(elements).find(el => el?.name === 'totalFrom');
+        const toInput = Object.values(elements).find(el => el?.name === 'totalTo');
+        //Превращаем текст из инпута в настоящее число, а если там пустота — получаем NaN
+        const fromVal = fromInput ? parseFloat(fromInput.value) : NaN;
+        const toVal = toInput ? parseFloat(toInput.value) : NaN;
+
+        Object.keys(elements).forEach(key => {
+            if (elements[key]) {
+                if (['INPUT', 'SELECT'].includes(elements[key].tagName) && elements[key].value) { // ищем поля ввода в фильтре с непустыми данными
+                    if (elements[key].name === 'totalTo' && !isNaN(fromVal) && !isNaN(toVal) && toVal < fromVal) { //если это инпут "Сумма ДО", но введённое число МЕНЬШЕ, чем "Сумма ОТ",
+            // мы его временно игнорируем и не отправляем на сервер, пока пользователь не допишет число
+                        return;
+                    }
+                    filter[`filter[${elements[key].name}]`] = elements[key].value; // чтобы сформировать в query вложенный объект фильтра
+                }
+            }
+        })
+
+        return Object.keys(filter).length ? Object.assign({}, query, filter) : query; // если в фильтре что-то добавилось, применим к запросу
+    }
+
+    return {
+        updateIndexes,
+        applyFiltering
+    }
 }
